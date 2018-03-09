@@ -3,7 +3,8 @@
 
 
 decode_xml(Bin) ->
-    [_, Header|T] = bs03:split(Bin, "<"),
+    [_, H|T] = bs03:split(Bin, "<"),
+    [Header, _] = bs03:split(H, ">"),
     decode_xml(T, Header, []).
 
 decode_xml([<<"/", _Rest/binary>>|T], Header, Acc) ->
