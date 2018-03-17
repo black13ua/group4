@@ -10,5 +10,5 @@ pack([H|T], [H|AccT], Acc) ->
 pack([H|T], AccT, Acc) ->
     pack(T, [H], [AccT|Acc]);
 pack([], AccT, Acc) ->
-    [_Empty|List] = p05:reverse([AccT|Acc]),
+    [_Empty|List] = lists:reverse([AccT|Acc]),
     List.

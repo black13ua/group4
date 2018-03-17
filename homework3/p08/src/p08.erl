@@ -10,4 +10,4 @@ compress([H|T], [H|Acc]) ->
 compress([H|T], Acc) ->
     compress(T, [H|Acc]);
 compress([], Acc) ->
-    p05:reverse(Acc).
+    lists:reverse(Acc).

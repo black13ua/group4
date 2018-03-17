@@ -1,0 +1,15 @@
+-module(p07).
+-export([flatten/1]).
+
+
+flatten(L) ->
+    flatten(L, []).
+
+flatten([[]|T], Acc) ->
+    flatten(T, Acc);
+flatten([[H1|T1]|T], Acc) ->
+    flatten([H1,T1|T], Acc);
+flatten([H|T], Acc) ->
+    flatten(T, [H|Acc]);
+flatten([], Acc) ->
+    lists:reverse(Acc).
