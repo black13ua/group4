@@ -6,7 +6,7 @@ replicate(L, N) ->
     replicate(L, N, 1, []).
 
 replicate([], _N, _C, Acc) ->
-    p05:reverse(Acc);
+    lists:reverse(Acc);
 replicate([H|T], N, _C=N, Acc) ->
     replicate(T, N, 1, [H|Acc]);
 replicate([H|T], N, C, Acc) ->
