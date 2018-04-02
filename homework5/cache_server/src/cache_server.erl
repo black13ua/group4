@@ -61,8 +61,9 @@ start_link(Options) ->
 %%--------------------------------------------------------------------
 init(Options) ->
     DropInterval = proplists:get_value(drop_interval, Options),
+    DropIntervalMilisec = DropInterval * 1000,
     self() ! create_ets,
-    self() ! {clean_ets, DropInterval},
+    timer:send_interval(DropIntervalMilisec, clean_ets),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -79,15 +80,6 @@ init(Options) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({insert, {K,V,TTL}}, _From, State) ->
-    Now = erlang:system_time(seconds),
-    Reply = case ets:insert(?MODULE, {K, {V, TTL, Now + TTL}}) of
-                true ->
-                    ok;
-                _ ->
-                    {error, key_not_inserted}
-            end, 
-    {reply, Reply, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -116,10 +108,9 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info(create_ets, State) ->
-	ets:new(?MODULE, [ordered_set, named_table]),
+	ets:new(?MODULE, [public, ordered_set, named_table]),
     {noreply, State};
-handle_info({clean_ets, DropIntervalSec}, State) ->
-    timer:send_after(DropIntervalSec * 1000, {clean_ets, DropIntervalSec}),
+handle_info(clean_ets, State) ->
     delete_obsolete(),
     {noreply, State};
 handle_info(_Info, State) ->
@@ -154,7 +145,13 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Exported functions
 %%%===================================================================
 insert(K, V, TTL) ->
-    gen_server:call(?SERVER, {insert, {K,V,TTL}}, 1000).
+    Now = erlang:system_time(seconds),
+    case ets:insert(?MODULE, {K, {V, TTL, Now + TTL}}) of
+        true ->
+            ok;
+        _ ->
+            {error, key_not_inserted}
+    end. 
 
 lookup(K) ->
     Now = erlang:system_time(seconds),
