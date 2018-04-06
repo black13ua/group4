@@ -2,10 +2,11 @@
 deps
 *.o
 *.beam
+*.log
 *.plt
 erl_crash.dump
 ebin/*.beam
 rel/example_project
-_rel/*
+_rel
 .concrete/DEV_MODE
 .rebar
