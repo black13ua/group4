@@ -10,23 +10,22 @@ init(_Type, Req, []) ->
 handle(Req, State) ->
     {Method, Req2} = cowboy_req:method(Req),
     HasBody = cowboy_req:has_body(Req2),
-    io:format("Req: ~p~n", [Req2]),
     {ok, Req3} = web_api_response(Method, HasBody, Req2),
 {ok, Req3, State}.
 
 web_api_response(<<"POST">>, true, Req) ->
-    {ok, PostVals, _Req2} = cowboy_req:body_qs(Req),
-    io:format("Vals: ~p~n", [PostVals]),
-    case jsx:is_json(PostVals) of
+    {ok, Body, _Req2} = cowboy_req:body(Req),
+    io:format("Body: ~p~n", [Body]),
+    case jsx:is_json(Body) of
         true ->
-            _Decoded = jsx:decode(PostVals),
-            cowboy_req:reply(200, [], <<"Allowed body.">>, Req);
+            _Decoded = jsx:decode(Body),
+            cowboy_req:reply(200, [], <<"Allowed body">>, Req);
         false ->
-            io:format("JSON Not Valid: ~p~n", [PostVals]),
+            io:format("JSON Not Valid: ~p~n", [Body]),
             cowboy_req:reply(400, [], <<"Not Valid JSON">>, Req)
     end;
 web_api_response(<<"POST">>, false, Req) ->
-    cowboy_req:reply(400, [], <<"Missing body.">>, Req);
+    cowboy_req:reply(400, [], <<"Missing body">>, Req);
 web_api_response(_, _, Req) ->
     %% Method not allowed.
     cowboy_req:reply(405, Req).
