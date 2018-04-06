@@ -161,8 +161,8 @@ lookup(K) ->
             {ok, V};
         [_|_] ->
             {error, expired};
-        _ ->
-            {error, not_found}
+        [] ->
+            []
     end.
 
 lookup_by_date(DateFrom, DateTo) ->

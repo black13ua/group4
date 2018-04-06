@@ -18,7 +18,9 @@ web_api_response(<<"POST">>, true, Req) ->
     io:format("Body: ~p~n", [Body]),
     case jsx:is_json(Body) of
         true ->
-            _Decoded = jsx:decode(Body),
+            Decoded = jsx:decode(Body),
+            io:format("JSON Decoded: ~p~n", [Decoded]),
+            cache_server_request(Decoded),
             cowboy_req:reply(200, [], <<"Allowed body">>, Req);
         false ->
             io:format("JSON Not Valid: ~p~n", [Body]),
@@ -30,7 +32,11 @@ web_api_response(_, _, Req) ->
     %% Method not allowed.
     cowboy_req:reply(405, Req).
 
-%cache_server_request(lookup) ->
+cache_server_request([{<<"action">>, <<"lookup">>}, {<<"key">>, Key}]) ->
+    Val = cache_server:lookup(Key),
+    io:format("Lookup KEY: ~p~n", [Val]);
+cache_server_request([Some, _]) ->
+    io:format("Some POST: ~p~n", [Some]).
 %cache_server_request(lookup_by_date) ->
 %cache_server_request(insert) ->
 
