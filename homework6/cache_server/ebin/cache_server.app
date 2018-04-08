@@ -5,5 +5,5 @@
 	{registered, [cache_server_sup]},
 	{applications, [kernel,stdlib,cowboy,jsx]},
 	{mod, {cache_server_app, []}},
-	{env, []}
+	{env, [{drop_interval, 30}]}
 ]}.

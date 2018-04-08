@@ -27,7 +27,6 @@
 -include_lib("stdlib/include/ms_transform.hrl").
 
 -define(SERVER, ?MODULE).
--define(DEFAULT_DROP_INTERVAL, 60).
 -define(DEFAULT_TTL, 300).
 
 -record(state, {}).
@@ -62,7 +61,7 @@ start_link(Options) ->
 %% @end
 %%--------------------------------------------------------------------
 init(Options) ->
-    DropInterval = proplists:get_value(drop_interval, Options, ?DEFAULT_DROP_INTERVAL),
+    DropInterval = proplists:get_value(drop_interval, Options),
     DropIntervalMilisec = DropInterval * 1000,
     self() ! create_ets,
     timer:send_interval(DropIntervalMilisec, clean_ets),
