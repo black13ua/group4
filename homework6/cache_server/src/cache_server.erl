@@ -22,12 +22,13 @@
          code_change/3]).
 
 %% Exported Functions
--export([delete_obsolete/0, insert/3, lookup/1, lookup_by_date/2]).
+-export([delete_obsolete/0, insert/2, insert/3, lookup/1, lookup_by_date/2]).
 
 -include_lib("stdlib/include/ms_transform.hrl").
 
 -define(SERVER, ?MODULE).
 -define(DEFAULT_DROP_INTERVAL, 60).
+-define(DEFAULT_TTL, 300).
 
 -record(state, {}).
 
@@ -145,6 +146,9 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Exported functions
 %%%===================================================================
+insert(K, V) ->
+    insert(K, V, ?DEFAULT_TTL).
+
 insert(K, V, TTL) ->
     Now = erlang:system_time(seconds),
     case ets:insert(?MODULE, {K, {V, TTL, Now + TTL}}) of
@@ -159,10 +163,8 @@ lookup(K) ->
     case ets:lookup(?MODULE, K) of
         [{K, {V,_TTL,Expire}}] when Now < Expire ->
             {ok, V};
-        [_|_] ->
-            {error, expired};
-        [] ->
-            []
+        _ ->
+            {ok, []}
     end.
 
 lookup_by_date(DateFrom, DateTo) ->
@@ -185,7 +187,7 @@ lookup_by_dates_ms(DFU, DTU) ->
                          DFU =< Expire andalso
                          DTU >= Expire andalso
                          Expire > Now
-                      -> {K,V}
+                      -> [{key, K}, {value, V}]
                     end),
     Result = ets:select(?MODULE, MS),
     {ok, Result}.

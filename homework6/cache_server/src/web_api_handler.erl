@@ -15,30 +15,36 @@ handle(Req, State) ->
 
 web_api_response(<<"POST">>, true, Req) ->
     {ok, Body, _Req2} = cowboy_req:body(Req),
-    io:format("Body: ~p~n", [Body]),
     case jsx:is_json(Body) of
         true ->
             Decoded = jsx:decode(Body),
-            io:format("JSON Decoded: ~p~n", [Decoded]),
-            cache_server_request(Decoded),
-            cowboy_req:reply(200, [], <<"Allowed body">>, Req);
+            {ok, Reply} = cache_server_request(Decoded),
+            ReplyJson = jsx:encode([{result, Reply}]),
+            cowboy_req:reply(200, [], ReplyJson, Req);
         false ->
-            io:format("JSON Not Valid: ~p~n", [Body]),
             cowboy_req:reply(400, [], <<"Not Valid JSON">>, Req)
     end;
 web_api_response(<<"POST">>, false, Req) ->
     cowboy_req:reply(400, [], <<"Missing body">>, Req);
 web_api_response(_, _, Req) ->
-    %% Method not allowed.
     cowboy_req:reply(405, Req).
 
 cache_server_request([{<<"action">>, <<"lookup">>}, {<<"key">>, Key}]) ->
-    Val = cache_server:lookup(Key),
-    io:format("Lookup KEY: ~p~n", [Val]);
-cache_server_request([Some, _]) ->
-    io:format("Some POST: ~p~n", [Some]).
-%cache_server_request(lookup_by_date) ->
-%cache_server_request(insert) ->
+    cache_server:lookup(Key);
+cache_server_request([{<<"action">>, <<"insert">>}, {<<"key">>, Key}, {<<"value">>, Val}]) ->
+    {ok, cache_server:insert(Key, Val)};
+cache_server_request([{<<"action">>, <<"lookup_by_date">>}, {<<"date_from">>, DateFrom}, {<<"date_to">>, DateTo}]) ->
+    {ok, DateFromErl} = web_datetime_to_erlang(DateFrom),
+    {ok, DateToErl} = web_datetime_to_erlang(DateTo),
+    cache_server:lookup_by_date(DateFromErl, DateToErl);
+cache_server_request([_Some, _]) ->
+    {ok, <<"API Method not Implemented!">>}.
+
+web_datetime_to_erlang(Datetime) ->
+    [Date, Time] = binary:split(Datetime, <<" ">>, [trim]),
+    [Year, Month, Day] = [erlang:binary_to_integer(X) || X <- binary:split(Date, <<"/">>, [global])],
+    [Hour, Minute, Second] = [erlang:binary_to_integer(X) || X <- binary:split(Time, <<":">>, [global])],
+    {ok, {{Year, Month, Day}, {Hour, Minute, Second}}}.
 
 terminate(_Reason, _Req, _State) ->
 ok.
